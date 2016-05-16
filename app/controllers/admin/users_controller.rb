@@ -44,40 +44,56 @@
 #  uid                    :string
 #
 
-class Admin::UsersController < Admin::BaseController
+class UsersController < ApplicationController
 
   before_action :authenticate_user!, except: :set_client_id
-  before_action :fetch_counts, :only => ['show']
-  respond_to :html, :js
-
-  def index
-    @users = User.all.page params[:page]
-    @user = User.new
-  end
 
   def show
-    @user = User.where(id: params[:id]).first
-    @topics = Topic.where(user_id: @user.id).page params[:page]
-
-    # We still have to grab the first topic for the user to use the same user partial
-    @topic = Topic.where(user_id: @user.id).first
-    @tracker.event(category: "Agent: #{current_user.name}", action: "Viewed User Profile", label: @user.name)
-    render 'admin/topics/index'
+    @user = current_user
   end
 
   def edit
-    @user = User.where(id: params[:id]).first
-    @tracker.event(category: "Agent: #{current_user.name}", action: "Editing User Profile", label: @user.name)
+    @page_title = t(:my_profile)
+    @title_tag = "#{AppSettings['settings.site_name']} Support: My Profile"
+    add_breadcrumb @page_title, categories_path
+
+    @user = current_user
   end
 
   def update
-    @user = User.find(params[:id])
+
+    if current_user.admin?
+      @user = User.find(params[:id])
+      @user.admin = params[:user][:admin]
+      @user.active = params[:user][:active]
+    else
+      @user = current_user
+    end
+
     @user.update(user_params)
-    fetch_counts
-    @topics = @user.topics.page params[:page]
-    @topic = Topic.where(user_id: @user.id).first
-    @tracker.event(category: "Agent: #{current_user.name}", action: "Edited User Profile", label: @user.name)
-    render 'admin/topics/index'
+
+    if current_user.admin?
+      fetch_counts
+      @topics = @user.topics.page params[:page]
+      @tracker.event(category: "Agent: #{current_user.name}", action: "Edited User Profile", label: @user.name)
+    end
+
+    respond_to do |format|
+      format.html {
+        redirect_to root_path
+      }
+      format.js {
+        render 'admin/tickets' if current_user.admin?
+      }
+    end
+
+  end
+
+  def set_client_id
+    
+    session[:client_id] = params[:client_id]
+    render nothing: true
+
   end
 
   private
@@ -98,9 +114,7 @@ class Admin::UsersController < Admin::BaseController
       :title,
       :twitter,
       :linkedin,
-      :language,
-      :active,
-      :admin
+      :language
     )
   end
 
