@@ -100,6 +100,21 @@ I am happy to accept contributions of any kind, including feedback and ideas, tr
 4. Submit a pull request
 
 
+Agent and Team Features (experimental)
+====================
+There is an experimental support for teams and agents in this branch. The basic changes:
+[x] Users can be agents and/or admins
+[x] Agents have access to the admin page, but only to the topic listed
+[x] Users can be restricted to teams
+[x] Topics can be assigned to a team
+
+TODO
+====
+[ ] Add and fix Tests
+[x] Throw 502 for unauthorized access
+[ ] If mail with a certain header is received it will assign team on creation
+[ ] Fix search for restricted agents
+
 License
 =======
 

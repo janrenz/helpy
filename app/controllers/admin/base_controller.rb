@@ -17,10 +17,9 @@ class Admin::BaseController < ApplicationController
   def check_current_user_is_allowed? topic
     return true unless topic.private
     if topic.team_list.count > 0 and current_user.is_restricted? and (topic.team_list & current_user.team_list).count > 0
-      puts 'allowed'
+      #proceed
     else
-      #TODO: throw not authorized
-      puts '%%%% not allowed'
+      #render status: :forbidden
     end
   end
 
