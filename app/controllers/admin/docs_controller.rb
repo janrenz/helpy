@@ -1,5 +1,7 @@
 class Admin::DocsController < Admin::BaseController
 
+  before_action :verify_admin
+
   respond_to :html, only: ['new','edit','create']
   respond_to :js, only: ['destroy']
 

@@ -1,5 +1,7 @@
 class Admin::ForumsController < Admin::BaseController
 
+  before_action :verify_admin
+
   respond_to :html, only: ['index','show','new','edit','create']
   respond_to :js, only: :destroy
 

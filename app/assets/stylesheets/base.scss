@@ -260,15 +260,30 @@ div.admin-tools {
 .label-private {
 	border: 2px dashed #666;
 	color: #666;
-  	display: inline;
-  	padding: .2em .6em .3em;
-  	font-size: 75%;
-  	font-weight: bold;
-  	line-height: 1;
-  	text-align: center;
-  	white-space: nowrap;
-  	vertical-align: baseline;
-  	border-radius: .25em;
+	display: inline;
+	padding: .2em .6em .3em;
+	font-size: 75%;
+	font-weight: bold;
+	line-height: 1;
+	text-align: center;
+	white-space: nowrap;
+	vertical-align: baseline;
+	border-radius: .25em;
+}
+
+.label-team {
+	border: 2px dashed gray;
+	color: #666;
+  background-color: lightgray;
+	display: inline;
+	padding: .2em .6em .3em;
+	font-size: 75%;
+	font-weight: bold;
+	line-height: 1;
+	text-align: center;
+	white-space: nowrap;
+	vertical-align: baseline;
+	border-radius: .25em;
 }
 
 .label-collapsed {
@@ -277,16 +292,16 @@ div.admin-tools {
 	border: 1px solid #eee;
 	background-color: #fff;
 	color: #999;
-  	display: inline;
-  	padding: .2em .6em .3em;
-  	font-size: 100%;
-  	font-weight: normal;
-  	line-height: 1;
-  	text-align: center;
-  	white-space: nowrap;
-  	vertical-align: baseline;
-  	border-radius: .25em;
-  	cursor: pointer;
+	display: inline;
+	padding: .2em .6em .3em;
+	font-size: 100%;
+	font-weight: normal;
+	line-height: 1;
+	text-align: center;
+	white-space: nowrap;
+	vertical-align: baseline;
+	border-radius: .25em;
+	cursor: pointer;
 }
 
 .label-count {
@@ -295,14 +310,14 @@ div.admin-tools {
 	border: 1px solid #999;
 	background-color: #fff;
 	color: #999;
-  	display: inline;
-  	font-size: 100%;
-  	font-weight: normal;
-  	line-height: 1;
-  	text-align: center;
-  	white-space: nowrap;
-  	vertical-align: baseline;
-  	border-radius: .25em;
+	display: inline;
+	font-size: 100%;
+	font-weight: normal;
+	line-height: 1;
+	text-align: center;
+	white-space: nowrap;
+	vertical-align: baseline;
+	border-radius: .25em;
 }
 
 .active {
@@ -393,7 +408,7 @@ ul.dropdown-menu li a.strong {
    color: white;
 }
 
-.topic-placeholder::-moz-placeholder {  
+.topic-placeholder::-moz-placeholder {
    color: white;
 }
 

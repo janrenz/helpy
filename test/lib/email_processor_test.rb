@@ -22,6 +22,12 @@ class EmailProcessorTest < ActiveSupport::TestCase
     end
   end
 
+  test 'an email with headers create some teams' do
+    assert('Topic.first.team_list', ['team1', 'team2']) do
+      EmailProcessor.new(FactoryGirl.build(:email_with_header)).process
+    end
+  end
+
   test 'a reply to the support address should be added as a reply post to the topic' do
     assert_no_difference('Topic.count') do
       assert_difference('Post.count', 1) do

@@ -15,6 +15,8 @@ class EmailProcessor
     sitename = AppSettings["settings.site_name"]
     message =  get_content_from_mail
     subject = @email.subject
+
+
     if subject.include?("[#{sitename}]") # this is a reply to an existing topic
       complete_subject = subject.split("[#{sitename}]")[1].strip
       ticket_number = complete_subject.split("-")[0].split("#")[1].strip
@@ -40,6 +42,9 @@ class EmailProcessor
 
     else # this is a new direct message
       topic = Forum.first.topics.create(:name => subject, :user_id => @user.id, :private => true)
+      if @email.headers['X-Helpy-Teams'].present?
+        topic.team_list = @email.headers['X-Helpy-Teams']
+      end
       #insert post to new topic
       post = topic.posts.create(:body => message, :user_id => @user.id, :kind => "first")
       # Call to GA

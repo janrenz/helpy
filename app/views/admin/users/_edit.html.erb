@@ -11,7 +11,10 @@
       <%= f.text_field :company %>
       <%= f.text_field :city, inline: true %> <%= f.text_field :state, inline: true  %>
       <%#= @topic.user.country.titleize unless @topic.user.country.nil? %>
-      <%= f.check_box :active, inline: true %> <%= f.check_box :admin, inline: true %>
+      <%= f.text_field :team_list, class: 'selectize' %>
+      <%= f.check_box :active, inline: true %>
+      <%= f.check_box :admin, inline: true %>
+      <%= f.check_box :agent, inline: true %>
 
 
     </span>
@@ -29,3 +32,22 @@
 
   <% end %>
 <!-- </div> -->
+<script type="text/javascript">
+  var data = [ <%== ActsAsTaggableOn::Tagging.all.where(context: "teams").map{|tagging| '"' + tagging.tag.name + '"' }.join(',')  %> ];
+  var items = data.map(function(x) { return { item: x }; });
+  $('.selectize').selectize({
+      plugins: ['remove_button'],
+      delimiter: ',',
+      persist: true,
+      options: items,
+      labelField: "item",
+      valueField: "item",
+      sortField: 'item',
+      searchField: 'item',
+      create: function(input) {
+          return {
+              item: input
+          }
+      }
+  });
+</script>

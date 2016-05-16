@@ -14,6 +14,15 @@ FactoryGirl.define do
     body 'Hello!'
   end
 
+  factory :email_with_header, class: Mail do
+    to 'to_user@email.com'
+    from 'Scott Miller <scott.miller@test.com>'
+    #headers['X-Helpy-Teams'] 'team1, team2'
+    subject 'email subject'
+    body 'Hello!'
+  end
+
+
   factory :reply, class: Mail do
     to 'to_user@email.com'
     from  'Scott Miller <scott.miller@test.com>'

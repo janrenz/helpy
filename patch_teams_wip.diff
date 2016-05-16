@@ -1,0 +1,276 @@
+From 9e56b75e2bf6190bd1ab0e2d3761de0e2d740306 Mon Sep 17 00:00:00 2001
+From: Jan Renz <jan.renz@hpi.de>
+Date: Fri, 13 May 2016 08:13:13 +0200
+Subject: [PATCH] WIP Teams
+
+---
+ Gemfile                                 |  2 ++
+ Gemfile.lock                            |  7 ++++++-
+ app/assets/javascripts/app.js           |  1 -
+ app/assets/javascripts/application.js   |  1 +
+ app/assets/stylesheets/admin.scss       |  4 ++++
+ app/assets/stylesheets/application.scss |  3 +++
+ app/controllers/users_controller.rb     |  5 +++--
+ app/models/user.rb                      |  6 ++++++
+ app/views/admin/_edit_user.html.erb     | 22 +++++++++++++++++++++-
+ app/views/admin/_ticket_stats.html.erb  | 16 ++++++----------
+ app/views/users/edit.html.erb           |  2 ++
+ 11 files changed, 54 insertions(+), 15 deletions(-)
+
+diff --git a/Gemfile b/Gemfile
+index 3e761b1..439c2de 100644
+--- a/Gemfile
++++ b/Gemfile
+@@ -80,6 +80,8 @@ gem 'twitter-bootstrap-rails'
+ gem 'twitter-bootstrap-rails-confirm'
+ gem 'rdiscount'
+ 
++gem "selectize-rails"
++
+ gem 'config', '~> 1.1.0', git: 'https://github.com/railsconfig/config.git'
+ 
+ gem 'daemons'
+diff --git a/Gemfile.lock b/Gemfile.lock
+index 5c70245..8e5c430 100644
+--- a/Gemfile.lock
++++ b/Gemfile.lock
+@@ -404,6 +404,7 @@ GEM
+     sdoc (0.4.1)
+       json (~> 1.7, >= 1.7.7)
+       rdoc (~> 4.0)
++    selectize-rails (0.12.1)
+     selenium-webdriver (2.53.0)
+       childprocess (~> 0.5)
+       rubyzip (~> 1.0)
+@@ -553,6 +554,7 @@ DEPENDENCIES
+   sass-rails (~> 5.0)
+   scss-lint
+   sdoc (~> 0.4.0)
++  selectize-rails
+   selenium-webdriver
+   shoulda
+   simple_form
+@@ -568,5 +570,8 @@ DEPENDENCIES
+   unicorn
+   web-console (~> 2.0)
+ 
++RUBY VERSION
++   ruby 2.2.1p85
++
+ BUNDLED WITH
+-   1.11.2
++   1.12.3
+diff --git a/app/assets/javascripts/app.js b/app/assets/javascripts/app.js
+index 017c7aa..9234472 100644
+--- a/app/assets/javascripts/app.js
++++ b/app/assets/javascripts/app.js
+@@ -30,7 +30,6 @@ Helpy.ready = function(){
+     $(this).closest('.has-arrow').addClass('over');
+   });
+ 
+-
+   $('.stats').on('click', function(){
+ 
+ 
+diff --git a/app/assets/javascripts/application.js b/app/assets/javascripts/application.js
+index 0176f20..c67fcb5 100644
+--- a/app/assets/javascripts/application.js
++++ b/app/assets/javascripts/application.js
+@@ -37,6 +37,7 @@
+ //= require rails.validations
+ //= require rails.validations.simple_form
+ //= require rails.validations.callbacks
++//= require selectize
+ 
+ // Jtruncate plugin, http://www.jeremymartin.name/projects.php?project=jTruncate
+ // modified by Scott Miller- remove animation, newline for more link
+diff --git a/app/assets/stylesheets/admin.scss b/app/assets/stylesheets/admin.scss
+index 78baf1c..c78a561 100644
+--- a/app/assets/stylesheets/admin.scss
++++ b/app/assets/stylesheets/admin.scss
+@@ -408,3 +408,7 @@ ul.settings-menu {
+ 		margin-bottom: 20px;
+ 	}
+ }
++
++.selectize-control.form-control {
++	border: none;
++}
+diff --git a/app/assets/stylesheets/application.scss b/app/assets/stylesheets/application.scss
+index 2e8c981..6e04b37 100644
+--- a/app/assets/stylesheets/application.scss
++++ b/app/assets/stylesheets/application.scss
+@@ -26,3 +26,6 @@
+ 
+ // Note: admin.scss is included separately via `layouts/admin.html.erb`.
+ @import "pick-a-color/build/1.2.3/css/pick-a-color-1.2.3.min";
++
++@import "selectize";
++@import "selectize.default";
+diff --git a/app/controllers/users_controller.rb b/app/controllers/users_controller.rb
+index 368ad17..96f4c27 100644
+--- a/app/controllers/users_controller.rb
++++ b/app/controllers/users_controller.rb
+@@ -90,7 +90,7 @@ class UsersController < ApplicationController
+   end
+ 
+   def set_client_id
+-    
++
+     session[:client_id] = params[:client_id]
+     render nothing: true
+ 
+@@ -114,7 +114,8 @@ class UsersController < ApplicationController
+       :title,
+       :twitter,
+       :linkedin,
+-      :language
++      :language,
++      :team_list
+     )
+   end
+ 
+diff --git a/app/models/user.rb b/app/models/user.rb
+index ae77ad6..c4def5a 100644
+--- a/app/models/user.rb
++++ b/app/models/user.rb
+@@ -72,6 +72,8 @@ class User < ActiveRecord::Base
+   has_attachment  :avatar, accept: [:jpg, :png, :gif]
+   is_gravtastic
+ 
++  acts_as_taggable_on :teams
++
+   ROLES = %w[admin agent editor user]
+ 
+   scope :admins, -> { where(admin: true).order('name asc') }
+@@ -80,6 +82,10 @@ class User < ActiveRecord::Base
+     Topic.where(assigned_user_id: self.id).active.count
+   end
+ 
++  def is_restricted?
++    self.team_list.count > 0
++  end
++
+   def self.create_password
+     Devise.friendly_token
+   end
+diff --git a/app/views/admin/_edit_user.html.erb b/app/views/admin/_edit_user.html.erb
+index 616d10c..ba414e1 100644
+--- a/app/views/admin/_edit_user.html.erb
++++ b/app/views/admin/_edit_user.html.erb
+@@ -12,7 +12,7 @@
+       <%= f.text_field :city, inline: true %> <%= f.text_field :state, inline: true  %>
+       <%#= @topic.user.country.titleize unless @topic.user.country.nil? %>
+       <%= f.check_box :active, inline: true %> <%= f.check_box :admin, inline: true %>
+-
++      <%= f.text_field :team_list, class: 'selectize' %>
+ 
+     </span>
+   </div>
+@@ -21,6 +21,7 @@
+     <%= f.text_field :work_phone %>
+     <%= f.text_field :cell_phone %>
+     <%= f.email_field :email %><br/>
++
+     <div class="tiny-header"><%= t(:social_info, default: "Social") %>:</div>
+     <%= f.text_field :twitter %>
+     <%= f.text_field :linkedin %>
+@@ -29,3 +30,22 @@
+ 
+   <% end %>
+ <!-- </div> -->
++<script type="text/javascript">
++var data = [ <%== ActsAsTaggableOn::Tagging.all.where(context: "teams").map{|tagging| '"' + tagging.tag.name + '"' }.join(',')  %> ];
++var items = data.map(function(x) { return { item: x }; });
++$('.selectize').selectize({
++    plugins: ['remove_button'],
++    delimiter: ',',
++    persist: true,
++    options: items,
++    labelField: "item",
++    valueField: "item",
++    sortField: 'item',
++    searchField: 'item',
++    create: function(input) {
++        return {
++            item: input
++        }
++    }
++});
++</script>
+diff --git a/app/views/admin/_ticket_stats.html.erb b/app/views/admin/_ticket_stats.html.erb
+index b8d1f22..ec7f7e7 100644
+--- a/app/views/admin/_ticket_stats.html.erb
++++ b/app/views/admin/_ticket_stats.html.erb
+@@ -16,7 +16,7 @@
+     <div class="has-arrow col-md-2 col-sm-2 col-xs-2 text-center">
+       <div class="dummy"></div>
+       <div class="stats">
+-        <h2><%= @new %></h2>
++        <% unless @current_user.is_restricted? %><h2><%= @new %></h2><% end %>
+         <%= link_to t(:new, default: "New"), admin_tickets_path(:status => 'new'), :remote => true, class: 'tiny-header admin-discussion-nav' %>
+       </div>
+     </div>
+@@ -24,8 +24,7 @@
+     <div class="has-arrow col-md-2 col-sm-2 col-xs-2 text-center">
+       <div class="dummy"></div>
+       <div class="stats">
+-
+-      <h2><%= @active %></h2>
++      <% unless @current_user.is_restricted? %><h2><%= @active %></h2><% end %>
+       <%= link_to t(:active, default: "Active"), admin_tickets_path(:status => 'active'), :remote => true, class: 'tiny-header admin-discussion-nav' %>
+       </div>
+     </div>
+@@ -33,24 +32,21 @@
+     <div class="has-arrow col-md-2 col-sm-2 col-xs-2 text-center">
+       <div class="dummy"></div>
+       <div class="stats">
+-
+-        <h2><%= @open %></h2>
++        <% unless @current_user.is_restricted? %><h2><%= @open %></h2><% end %>
+         <%= link_to t(:open, default: "Open"), admin_tickets_path(:status => 'open'), :remote => true, class: 'tiny-header admin-discussion-nav' %>
+       </div>
+     </div>
+     <div class="has-arrow col-md-2 col-sm-2 col-xs-2 text-center">
+       <div class="dummy"></div>
+       <div class="stats">
+-
+-        <h2><%= @mine %></h2>
++        <% unless @current_user.is_restricted? %><h2><%= @mine %></h2><% end %>
+         <%= link_to t(:mine, default: "Mine"), admin_tickets_path(:status => 'assigned', :assigned_user_id => current_user), :remote => true, class: 'tiny-header admin-discussion-nav' %>
+       </div>
+     </div>
+     <div class="has-arrow col-md-2 col-sm-2 col-xs-2 text-center">
+       <div class="dummy"></div>
+       <div class="stats">
+-
+-        <h2><%= @pending %></h2>
++        <% unless @current_user.is_restricted? %><h2><%= @pending %></h2><% end %>
+         <%= link_to t(:pending, default:"Pending"), admin_tickets_path(:status => 'pending'), :remote => true, class: 'tiny-header admin-discussion-nav' %>
+       </div>
+     </div>
+@@ -58,7 +54,7 @@
+     <div class="col-md-2 col-sm-2 col-xs-2 text-center">
+       <div class="dummy"></div>
+       <div class="stats">
+-        <h2><%= @closed %></h2>
++        <% unless @current_user.is_restricted? %><h2><%= @closed %></h2><% end %>
+         <%= link_to t(:closed, default: "Resolved"), admin_tickets_path(:status => 'closed'), :remote => true, class: 'tiny-header admin-discussion-nav' %>
+       </div>
+     </div>
+diff --git a/app/views/users/edit.html.erb b/app/views/users/edit.html.erb
+index 6f11bc8..4157049 100644
+--- a/app/views/users/edit.html.erb
++++ b/app/views/users/edit.html.erb
+@@ -9,6 +9,8 @@
+   <%= f.text_field :city %>
+   <%= f.text_field :state %>
+   <%= f.text_field :zip %>
++  <%= f.text_field :team_list %>
++
+   <%= f.attachinary_file_field :avatar %>
+ 
+   <%= f.text_area :signature %>
+-- 
+2.7.4
+

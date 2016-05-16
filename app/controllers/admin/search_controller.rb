@@ -1,5 +1,7 @@
 class Admin::SearchController < Admin::BaseController
 
+  before_action :verify_admin_or_agent #until we can filter search for teams
+
   before_action :fetch_counts, :only => ['topic_search']
   before_action :pipeline, :only => ['topic_search']
   before_action :remote_search, :only => ['topic_search']
@@ -36,5 +38,5 @@ class Admin::SearchController < Admin::BaseController
 
     render template
   end
-  
+
 end

@@ -1,5 +1,7 @@
 class Admin::SharedController < Admin::BaseController
 
+  before_action :verify_admin
+
   def update_order
     # Safely identify the model we're updating the position of
     klass = [Category, Doc].detect { |c| c.name.casecmp(params[:object]) == 0 }

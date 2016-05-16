@@ -62,20 +62,30 @@ class ApplicationController < ActionController::Base
   end
 
   def fetch_counts
-    @new = Topic.unread.count
-    @unread = Topic.unread.count
-    @pending = Topic.mine(current_user.id).pending.count
-    @open = Topic.open.count
-    @active = Topic.active.count
-    @mine = Topic.mine(current_user.id).count
-    @closed = Topic.closed.count
-    @spam = Topic.spam.count
-
-    @admins = User.admins
+    #todo add team scope
+    if current_user.is_restricted?
+      topics = Topic.tagged_with(current_user.team_list, :any => true)
+      @admins = User.admins #can_receive_ticket.tagged_with(current_user.team_list, :any => true)
+    else
+      topics = Topic.all
+      @admins = User.admins
+    end
+    @new = topics.unread.count
+    @unread = topics.unread.count
+    @pending = topics.mine(current_user.id).pending.count
+    @open = topics.open.count
+    @active = topics.active.count
+    @mine = topics.mine(current_user.id).count
+    @closed = topics.closed.count
+    @spam = topics.spam.count
   end
 
   def verify_admin
       (current_user.nil?) ? redirect_to(root_path) : (redirect_to(root_path) unless current_user.admin?)
+  end
+
+  def verify_admin_or_agent
+      (current_user.nil?) ? redirect_to(root_path) : (redirect_to(root_path) unless current_user.admin? or current_user.agent?)
   end
 
   def instantiate_tracker

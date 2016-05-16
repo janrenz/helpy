@@ -77,6 +77,9 @@ class User < ActiveRecord::Base
   ROLES = %w[admin agent editor user]
 
   scope :admins, -> { where(admin: true).order('name asc') }
+  scope :agents, -> { where(agent: true).order('name asc') }
+  #TODO either admin or agent
+  scope :can_receive_ticket, -> { where(agent: true).order('name asc') }
 
   def active_assigned_count
     Topic.where(assigned_user_id: self.id).active.count
